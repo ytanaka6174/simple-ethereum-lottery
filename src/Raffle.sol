@@ -19,7 +19,6 @@
 // private
 // view & pure functions
 
-
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
@@ -33,7 +32,9 @@ import {VRFV2PlusClient} from "@chainlink/contracts/src/v0.8/vrf/dev/libraries/V
  * @dev implements chainlink vrf2.5
  */
 contract Raffle is VRFConsumerBaseV2Plus {
-    /** Errors */
+    /**
+     * Errors
+     */
     error Raffle__SendMoreEthToEnterRaffle();
     error Raffle__TransferFailed();
     error Raffle__RaffleNotOpen();
@@ -45,7 +46,9 @@ contract Raffle is VRFConsumerBaseV2Plus {
         CALCULATING
     }
 
-    /** State Variables */
+    /**
+     * State Variables
+     */
     uint256 private immutable i_entranceFee;
     uint256 private immutable i_interval;
     bytes32 private immutable i_keyHash;
@@ -58,7 +61,9 @@ contract Raffle is VRFConsumerBaseV2Plus {
     address private s_recentWinner;
     RaffleState private s_raffleState;
 
-    /** Events */
+    /**
+     * Events
+     */
     event RaffleEntered(address indexed player);
     event WinnerPicked(address indexed winner);
     event RequestedRaffleWinner(uint256 indexed requestId);
@@ -70,7 +75,6 @@ contract Raffle is VRFConsumerBaseV2Plus {
         bytes32 gasLane,
         uint32 callbackGasLimit,
         uint256 subscriptionId
-
         //uint16 requestConfirmations
         //uint32 numWords
     ) VRFConsumerBaseV2Plus(vrfCoordinator) {
@@ -99,7 +103,6 @@ contract Raffle is VRFConsumerBaseV2Plus {
 
         s_players.push(payable(msg.sender));
         emit RaffleEntered(msg.sender);
-
     }
 
     /**
@@ -109,22 +112,35 @@ contract Raffle is VRFConsumerBaseV2Plus {
      * @return upkeepNeeded Whether the upkeep is needed
      * @return --ignore
      */
-    function checkUpkeep(bytes memory /* checkData */) public view returns(bool upkeepNeeded, bytes memory /* performData */) {
+    function checkUpkeep(
+        bytes memory /* checkData */
+    )
+        public
+        view
+        returns (
+            bool upkeepNeeded,
+            bytes memory /* performData */
+        )
+    {
         bool timePassed = block.timestamp - s_lastTimestamp >= i_interval;
         bool isOpen = (s_raffleState == RaffleState.OPEN);
         bool hasPlayers = s_players.length > 0;
         bool hasBalance = address(this).balance > 0;
         upkeepNeeded = (timePassed && isOpen && hasPlayers);
-        return(upkeepNeeded, "0x0");
+        return (upkeepNeeded, "0x0");
     }
-    
+
     //1. get a random number
     //2. use that number to pick a winner
     //3. be automatically called
-    function performUpkeep(bytes memory /* performData */) external {
+    function performUpkeep(
+        bytes memory /* performData */
+    )
+        external
+    {
         //check to see if enough time passed
         (bool upkeepNeeded,) = checkUpkeep("");
-        if(!upkeepNeeded) {
+        if (!upkeepNeeded) {
             revert Raffle__UpkeepNotNeeded(address(this).balance, s_players.length, uint256(s_raffleState));
         }
         s_raffleState = RaffleState.CALCULATING;
@@ -145,7 +161,7 @@ contract Raffle is VRFConsumerBaseV2Plus {
     function fulfillRandomWords(uint256 requestId, uint256[] calldata randomWords) internal override {
         //Checks
         //requires and conditionals would go here if needed
-        
+
         //Effects (Internal Contract State)
         uint256 indexOfWinner = randomWords[0] % s_players.length;
         address payable recentWinner = s_players[indexOfWinner];
@@ -157,12 +173,14 @@ contract Raffle is VRFConsumerBaseV2Plus {
 
         //Interactions (External Contract interactions)
         (bool success,) = recentWinner.call{value: address(this).balance}("");
-        if(!success) {
+        if (!success) {
             revert Raffle__TransferFailed();
         }
     }
 
-    /** Getter Functions */
+    /**
+     * Getter Functions
+     */
     function getEntranceFee() external view returns (uint256) {
         return i_entranceFee;
     }
@@ -179,15 +197,15 @@ contract Raffle is VRFConsumerBaseV2Plus {
         return address(this).balance;
     }
 
-    function getCurrentNumPlayers() external view returns(uint256) {
+    function getCurrentNumPlayers() external view returns (uint256) {
         return s_players.length;
     }
 
-    function getLastTimestamp() external view returns(uint256) {
+    function getLastTimestamp() external view returns (uint256) {
         return s_lastTimestamp;
     }
 
-    function getRecentWinner() external view returns(address) {
+    function getRecentWinner() external view returns (address) {
         return s_recentWinner;
     }
 }

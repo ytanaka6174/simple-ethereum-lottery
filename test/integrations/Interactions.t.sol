@@ -10,9 +10,7 @@ import {VRFCoordinatorV2_5Mock} from "@chainlink/contracts/src/v0.8/vrf/mocks/VR
 import {Vm} from "forge-std/Vm.sol";
 import {Raffle} from "src/Raffle.sol";
 
-
 contract InteractionsTest is Test {
-
     Raffle public raffle;
     HelperConfig public helperConfig;
 
@@ -26,10 +24,9 @@ contract InteractionsTest is Test {
         //Arrange
         CreateSubscription createSubscription = new CreateSubscription();
         //Act
-        (uint256 subid, ) = createSubscription.createSubscriptionUsingConfig();
-        //Assert 
+        (uint256 subid,) = createSubscription.createSubscriptionUsingConfig();
+        //Assert
         assert(subid != 0);
-
     }
 
     function testSubscriptionIsActuallyRegistered() public {
@@ -40,7 +37,7 @@ contract InteractionsTest is Test {
         // Assert - Query the VRF coordinator to verify the subscription exists
         VRFCoordinatorV2_5Mock vrfMock = VRFCoordinatorV2_5Mock(vrfCoordinator);
         // Get subscription details - if subscription doesn't exist, this will revert
-        (uint96 balance , , ,address subOwner,) = vrfMock.getSubscription(subId);
+        (uint96 balance,,, address subOwner,) = vrfMock.getSubscription(subId);
         // Verify subscription has an owner (proves it was created)
         assert(subOwner != address(0));
         // Verify subscription ID is greater than 0
@@ -59,18 +56,17 @@ contract InteractionsTest is Test {
         VRFCoordinatorV2_5Mock vrfMock = VRFCoordinatorV2_5Mock(vrfCoordinator);
         //HelperConfig helperConfig = new HelperConfig();
         address link = helperConfig.getConfig().link;
-        (uint96 prevBalance , , , ,) = vrfMock.getSubscription(subId);
+        (uint96 prevBalance,,,,) = vrfMock.getSubscription(subId);
         uint256 beforeFundingBalance = prevBalance;
         //Act
         FundSubscription fundSubscription = new FundSubscription();
-        fundSubscription.fundSubscription(vrfCoordinator,subId,link);
-        (uint96 newBalance , , , ,) = vrfMock.getSubscription(subId);
+        fundSubscription.fundSubscription(vrfCoordinator, subId, link);
+        (uint96 newBalance,,,,) = vrfMock.getSubscription(subId);
         uint256 afterFundingBalance = newBalance;
         console.log("Prev Balance: ", prevBalance);
         console.log("New Balance: ", newBalance);
         //Assert
-        assert(prevBalance < newBalance); 
-
+        assert(prevBalance < newBalance);
     }
 
     //Add Consumer Tests
@@ -88,5 +84,4 @@ contract InteractionsTest is Test {
         address consumerAddress = abi.decode(entries[0].data, (address));
         assertEq(consumerAddress, address(raffle));
     }
-
 }
